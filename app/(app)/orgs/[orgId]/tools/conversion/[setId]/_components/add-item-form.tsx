@@ -144,11 +144,12 @@ export function AddItemForm({ orgId, toolItems, onSuccess, onCancel: _onCancel }
   const [search, setSearch] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const filteredItems = search
+  const filterQuery = search || name;
+  const filteredItems = filterQuery
     ? items.filter(
         (i) =>
-          i.name.toLowerCase().includes(search.toLowerCase()) ||
-          i.unit.toLowerCase().includes(search.toLowerCase()),
+          i.name.toLowerCase().includes(filterQuery.toLowerCase()) ||
+          i.unit.toLowerCase().includes(filterQuery.toLowerCase()),
       )
     : items;
 
