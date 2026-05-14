@@ -68,6 +68,7 @@ export default async function RosterPage({
       roles={roles.map((r) => ({ id: r.id, name: r.name, color: r.color }))}
       templates={templates.map((t) => ({ id: t.id, name: t.name, cycleWeeks: t.cycleWeeks }))}
       canManage={canManage}
+      currentMembershipId={membership?.id ?? null}
       orgOpenTimeMin={orgSchedule.openTimeMin}
       orgCloseTimeMin={orgSchedule.closeTimeMin}
       orgTimezone={orgSchedule.timezone}

@@ -50,6 +50,7 @@ interface RosterPageClientProps {
   roles: Role[];
   templates: RosterTemplate[];
   canManage: boolean;
+  currentMembershipId: string | null;
   orgOpenTimeMin: number | null;
   orgCloseTimeMin: number | null;
   orgTimezone: string;
@@ -63,6 +64,7 @@ export function RosterPageClient({
   roles,
   templates,
   canManage,
+  currentMembershipId,
   orgOpenTimeMin,
   orgCloseTimeMin,
   orgTimezone,
@@ -71,7 +73,7 @@ export function RosterPageClient({
     getMondayOfWeek(new Date()),
   );
   const [filterMembershipId, setFilterMembershipId] = useState<string | null>(
-    null,
+    currentMembershipId,
   );
 
   const weekStarts = useMemo(
