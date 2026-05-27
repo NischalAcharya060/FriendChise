@@ -1019,6 +1019,75 @@ async function seedOrg1(users: Users) {
   await prisma.taskTag.createMany({ data: taskTagRows, skipDuplicates: true });
   console.log(`  ✓ ${taskTagRows.length} task tags created`);
 
+  // ── Task Comments — Make Biscoff Filling ───────────────────────────────────
+  console.log("→ Creating task comments...");
+  const biscoffTask = _tasksByName["Make Biscoff Filling"]!;
+
+  const topLevelComments = await prisma.taskComment.createManyAndReturn({
+    data: [
+      {
+        taskId: biscoffTask.id, orgId: org.id,
+        authorId: casey.id, authorName: "Casey", authorImage: "https://i.pravatar.cc/150?img=12",
+        content: "Just a heads up — the Biscoff spread can seize if the oil isn't warm enough. Make sure the vegetable oil is at least at room temp before mixing.",
+        isPinned: true, pinnedAt: new Date(),
+      },
+      {
+        taskId: biscoffTask.id, orgId: org.id,
+        authorId: jordan.id, authorName: "Jordan", authorImage: "https://i.pravatar.cc/150?img=8",
+        content: "We ran out of Biscoff mid-batch last Tuesday. Can someone make sure we always have at least 2 backup jars in the storeroom before the morning shift?",
+      },
+      {
+        taskId: biscoffTask.id, orgId: org.id,
+        authorId: ivan.id, authorName: "Ivan", authorImage: "https://i.pravatar.cc/150?img=3",
+        content: "The 4% vegetable oil ratio in the recipe is the minimum — if the spread feels too thick after mixing, bump it up slightly. Don't go over 6% or it'll be too runny.",
+      },
+      {
+        taskId: biscoffTask.id, orgId: org.id,
+        authorId: riley.id, authorName: "Riley", authorImage: "https://i.pravatar.cc/150?img=5",
+        content: "Reminder to always wet the scoop with cold water before measuring — the spread sticks badly otherwise and you'll lose product on the sides.",
+      },
+    ],
+    select: { id: true, authorId: true },
+  });
+
+  const [c1, c2, c3, c4] = [
+    topLevelComments.find((c) => c.authorId === casey.id)!,
+    topLevelComments.find((c) => c.authorId === jordan.id)!,
+    topLevelComments.find((c) => c.authorId === ivan.id)!,
+    topLevelComments.find((c) => c.authorId === riley.id)!,
+  ];
+
+  // Replies
+  await prisma.taskComment.createMany({
+    data: [
+      {
+        taskId: biscoffTask.id, orgId: org.id,
+        authorId: jordan.id, authorName: "Jordan", authorImage: "https://i.pravatar.cc/150?img=8",
+        content: "Good call Casey. I had it seize on me once — had to bin the whole batch. Warming the oil for 10 sec in the microwave first fixes it every time.",
+        parentId: c1.id,
+      },
+      {
+        taskId: biscoffTask.id, orgId: org.id,
+        authorId: casey.id, authorName: "Casey", authorImage: "https://i.pravatar.cc/150?img=12",
+        content: "Agreed, added a note to the storeroom checklist. Also flagged it on the weekly order form so we auto-reorder when stock drops below 2 jars.",
+        parentId: c2.id,
+      },
+      {
+        taskId: biscoffTask.id, orgId: org.id,
+        authorId: alex.id, authorName: "Alex", authorImage: "https://i.pravatar.cc/150?img=15",
+        content: "Thanks Ivan, didn't know there was a range. The batch I made yesterday felt a bit thick so I'll try 5% next time.",
+        parentId: c3.id,
+      },
+      {
+        taskId: biscoffTask.id, orgId: org.id,
+        authorId: ivan.id, authorName: "Ivan", authorImage: "https://i.pravatar.cc/150?img=3",
+        content: "Yep, same trick works for the Nutella filling too.",
+        parentId: c4.id,
+      },
+    ],
+  });
+  console.log("  ✓ 8 task comments created (Make Biscoff Filling)");
+
   // Quick lookup helpers
   const tByName = Object.fromEntries(
     createdTasks.map(({ task }) => [task.name, task]),
@@ -3779,7 +3848,75 @@ async function seedFranchisee(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 5. INVITES — pending invite for Sam to join Donut Shop A
+// 5. EMPTY ORGS — multiple orgs with Ivan as a member (not owner)
+//    Owner: Jordan  |  Member: Ivan
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function seedEmptyOrgs(users: Users) {
+  const { jordan, ivan } = users;
+
+  const orgDefs = [
+    { name: "Coffee House B",  address: "10 George Street, Sydney NSW 2000",       timezone: "Australia/Sydney"    },
+    { name: "Bakery Co C",     address: "55 Collins Street, Melbourne VIC 3000",    timezone: "Australia/Melbourne" },
+    { name: "Pie Shop D",      address: "78 Queen Street, Brisbane QLD 4000",       timezone: "Australia/Brisbane"  },
+    { name: "Burger Joint E",  address: "22 Rundle Mall, Adelaide SA 5000",         timezone: "Australia/Adelaide"  },
+    { name: "Noodle Bar F",    address: "99 Murray Street, Perth WA 6000",          timezone: "Australia/Perth"     },
+  ];
+
+  console.log(`→ Creating ${orgDefs.length} empty orgs...`);
+  for (const def of orgDefs) {
+    const org = await prisma.organization.create({
+      data: {
+        name: def.name,
+        ownerId: jordan.id,
+        address: def.address,
+        timezone: def.timezone,
+        operatingDays: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+      },
+    });
+
+    const [roleOwner, roleWorker] = await prisma.role
+      .createManyAndReturn({
+        data: [
+          { orgId: org.id, name: "Owner",          key: ROLE_KEYS.OWNER,          color: "#ef4444", isDeletable: false, isDefault: false },
+          { orgId: org.id, name: "Default Member", key: ROLE_KEYS.DEFAULT_MEMBER, color: "#6b7280", isDeletable: false, isDefault: true  },
+        ],
+      })
+      .then((rows) => [
+        rows.find((r) => r.key === ROLE_KEYS.OWNER)!,
+        rows.find((r) => r.key === ROLE_KEYS.DEFAULT_MEMBER)!,
+      ] as const);
+
+    await prisma.permission.createMany({
+      data: [
+        ...ALL_OWNER_PERMISSIONS.map((action) => ({ roleId: roleOwner.id, action })),
+        { roleId: roleWorker.id, action: PermissionAction.VIEW_TIMETABLE },
+      ],
+      skipDuplicates: true,
+    });
+
+    const _memberships = await prisma.membership.createManyAndReturn({
+      data: [
+        { orgId: org.id, userId: jordan.id, workingDays: ["mon", "tue", "wed", "thu", "fri"] },
+        { orgId: org.id, userId: ivan.id,   workingDays: ["mon", "tue", "wed", "thu", "fri"] },
+      ],
+    });
+    const mJordan = _memberships.find((m) => m.userId === jordan.id)!;
+    const mIvan   = _memberships.find((m) => m.userId === ivan.id)!;
+
+    await prisma.memberRole.createMany({
+      data: [
+        { membershipId: mJordan.id, roleId: roleOwner.id  },
+        { membershipId: mIvan.id,   roleId: roleWorker.id },
+      ],
+    });
+
+    console.log(`  ✓ ${org.name}`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 6. INVITES — pending invite for Sam to join Donut Shop A
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function seedInvites(
@@ -3873,6 +4010,7 @@ async function main() {
   const users = await seedUsers();
   const org1 = await seedOrg1(users);
   const franchisee = await seedFranchisee(users, org1);
+  await seedEmptyOrgs(users);
   await seedInvites(users, org1);
 
   console.log("Seeded successfully:", {
