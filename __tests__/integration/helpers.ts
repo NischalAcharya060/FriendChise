@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { ROLE_KEYS } from "@/lib/rbac";
 
 export const SEED_USER_EMAIL =
-  process.env.INTEGRATION_TEST_USER_EMAIL ?? "alt28919@gmail.com";
+  process.env.INTEGRATION_TEST_USER_EMAIL ?? "casey@example.test";
 
 /** Returns the integration-test seed user (Casey). */
 export async function getSeedUser() {
@@ -117,4 +117,37 @@ export async function cleanupTempUser(userId: string) {
 
   await prisma.invite.deleteMany({ where: { recipientId: userId } });
   await prisma.user.delete({ where: { id: userId } });
+}
+
+/**
+ * Creates a minimal throw-away org (owned by the seed user) plus one task in
+ * it. Use this to get a cross-org task for scoping tests.
+ * Always pair with cleanupTempOrg(org.id) in a finally block.
+ */
+export async function createTempOrgWithTask() {
+  const owner = await getSeedUser();
+  const org = await prisma.organization.create({
+    data: {
+      name: `Tmp Org ${crypto.randomUUID()}`,
+      ownerId: owner.id,
+      timezone: "UTC",
+    },
+  });
+  const task = await prisma.task.create({
+    data: {
+      orgId: org.id,
+      name: `Tmp Task ${crypto.randomUUID()}`,
+      color: "#888888",
+      durationMin: 30,
+    },
+  });
+  return { org, task };
+}
+
+/**
+ * Deletes a temporary org and all its cascade-deleted records.
+ * Cascades to roles, memberships, tasks, etc. per schema ON DELETE CASCADE.
+ */
+export async function cleanupTempOrg(orgId: string) {
+  await prisma.organization.delete({ where: { id: orgId } });
 }
