@@ -21,6 +21,8 @@ interface TemplateEditorSidebarContentProps {
   simpleHref: string;
   dayHref: string;
   weekHref: string;
+  onModeChange: (mode: "calendar" | "simple") => void;
+  onSpanChange: (span: "day" | "week") => void;
   availableTasks: SharedTask[];
 }
 
@@ -55,6 +57,8 @@ export function TemplateEditorSidebarContent({
   simpleHref,
   dayHref,
   weekHref,
+  onModeChange,
+  onSpanChange,
   availableTasks,
 }: TemplateEditorSidebarContentProps) {
   const router = useRouter();
@@ -104,6 +108,8 @@ export function TemplateEditorSidebarContent({
           simpleHref={simpleHref}
           dayHref={dayHref}
           weekHref={weekHref}
+          onModeChange={onModeChange}
+          onSpanChange={onSpanChange}
           className="flex-col items-start"
         />
         {mode === "calendar" && <ZoomSlider />}

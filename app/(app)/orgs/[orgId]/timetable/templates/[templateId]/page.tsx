@@ -4,14 +4,7 @@ import { getTimetableTemplate } from "@/lib/services/templates";
 import { getTasks } from "@/lib/services/tasks";
 import { prisma } from "@/lib/prisma";
 import { toLocalDateStr } from "@/lib/date-utils";
-import { RegisterPageSidebarSubContent } from "@/components/layout/page-sidebar-context";
-import { TemplateEditorSidebarContent } from "./_components/template-editor-sidebar-content";
-import {
-  TemplateEditorClient,
-  type ClientTemplateInstance,
-  type ClientTask,
-  type ClientMembership,
-} from "./index";
+import { TemplateEditorPageClient } from "./template-editor-page-client";
 import { PermissionAction } from "@prisma/client";
 
 export default async function TemplateEditorPage({
@@ -24,7 +17,7 @@ export default async function TemplateEditorPage({
   const { orgId, templateId } = await params;
   const sp = await searchParams;
   const mode: "calendar" | "simple" =
-    sp.mode === "simple" ? "simple" : "calendar";
+    sp.mode === "simple" || sp.mode === "calendar" ? sp.mode : "calendar";
   const span: "day" | "week" = sp.span === "day" ? "day" : "week";
 
   const editorHref = (overrides: { mode?: string; span?: string }) => {
@@ -65,7 +58,7 @@ export default async function TemplateEditorPage({
     tasks.map((t) => [t.id, t.eligibility[0]?.role?.color ?? null]),
   );
 
-  const instances: ClientTemplateInstance[] = template.entries.map((inst) => ({
+  const instances = template.entries.map((inst) => ({
     id: inst.id,
     dayIndex: inst.dayIndex,
     startTimeMin: inst.startTimeMin!,
@@ -87,7 +80,7 @@ export default async function TemplateEditorPage({
     })),
   }));
 
-  const availableTasks: ClientTask[] = tasks.map((t) => ({
+  const availableTasks = tasks.map((t) => ({
     id: t.id,
     name: t.name,
     durationMin: t.durationMin,
@@ -95,7 +88,7 @@ export default async function TemplateEditorPage({
     roleColor: t.eligibility[0]?.role?.color ?? null,
     roleName: t.eligibility[0]?.role?.name ?? null,
   }));
-  const memberships: ClientMembership[] = rawMemberships;
+  const memberships = rawMemberships;
   const todayStr = toLocalDateStr(new Date(), org?.timezone ?? "UTC");
 
   return (
@@ -103,25 +96,7 @@ export default async function TemplateEditorPage({
       className="flex flex-col"
       style={{ height: "calc(100dvh - 148px)", minHeight: "600px" }}
     >
-      <RegisterPageSidebarSubContent
-        content={
-          <TemplateEditorSidebarContent
-            orgId={orgId}
-            templateId={templateId}
-            templateDays={template.cycleLengthDays}
-            mode={mode}
-            span={span}
-            calendarHref={editorHref({ mode: "calendar" })}
-            simpleHref={editorHref({ mode: "simple" })}
-            dayHref={editorHref({ span: "day" })}
-            weekHref={editorHref({ span: "week" })}
-            availableTasks={availableTasks}
-          />
-        }
-      />
-
-      <TemplateEditorClient
-        title={<></>}
+      <TemplateEditorPageClient
         orgId={orgId}
         templateId={templateId}
         templateDays={template.cycleLengthDays}
@@ -133,7 +108,10 @@ export default async function TemplateEditorPage({
         closeTimeMin={org?.closeTimeMin ?? 1320}
         mode={mode}
         span={span}
-        fillHeight
+        calendarHref={editorHref({ mode: "calendar" })}
+        simpleHref={editorHref({ mode: "simple" })}
+        dayHref={editorHref({ span: "day" })}
+        weekHref={editorHref({ span: "week" })}
       />
     </div>
   );
