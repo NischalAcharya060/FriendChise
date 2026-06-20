@@ -10,8 +10,8 @@ type ConnectSeedUsersOptions = {
  * Ensures every namespaced seed user is a member of the given org.
  *
  * Existing memberships are preserved. Any missing users are added with the
- * provided default role, if one is supplied. This function is idempotent:
- * role assignment will execute even on reruns when no new memberships are created.
+ * provided default role, if one is supplied. Role assignment is idempotent,
+ * so rerunning seeds keeps memberships and roles aligned.
  */
 export async function connectSeedUsersToOrg(
   prisma: PrismaClient,
@@ -31,17 +31,16 @@ export async function connectSeedUsersToOrg(
   const missingUsers = Object.values(users).filter(
     (user) => !existingUserIds.has(user.id),
   );
-
-  let newMemberships: Array<{ id: string }> = [];
-  if (missingUsers.length > 0) {
-    newMemberships = await prisma.membership.createManyAndReturn({
-      data: missingUsers.map((user) => ({
-        orgId,
-        userId: user.id,
-        workingDays: options.workingDays ?? [],
-      })),
-    });
-  }
+  const memberships =
+    missingUsers.length === 0
+      ? []
+      : await prisma.membership.createManyAndReturn({
+          data: missingUsers.map((user) => ({
+            orgId,
+            userId: user.id,
+            workingDays: options.workingDays ?? [],
+          })),
+        });
 
   if (options.defaultRoleId) {
     const allMemberships = await prisma.membership.findMany({
@@ -58,5 +57,5 @@ export async function connectSeedUsersToOrg(
     });
   }
 
-  return newMemberships;
+  return memberships;
 }
