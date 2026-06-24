@@ -8,16 +8,6 @@ order: 18.5
 
 ---
 
-## Franchise System
-
-A parent org can spawn franchisee orgs using a one-time invite token flow:
-
-1. Franchisor generates a token via the Franchisee page — stores a `FranchiseToken` with `invitedEmail` and `expiresAt`.
-2. The invitee visits `/orgs/new` and submits the token (via `joinFranchise` server action).
-3. On join, all roles, tasks, and timetable settings are cloned from the parent into the new child org (`lib/services/franchise.ts`).
-4. The joining user is assigned as the franchisee org's Owner.
-5. The parent org owner can view all child orgs and pending tokens, extend/revoke tokens, and remove franchisees.
-
 ## UI Notes
 
 - **Org color accents** — both the hub page (`/`) org cards and the org overview page (`/orgs/[orgId]`) derive a deterministic accent color from the org name via a seeded palette (`orgColor(name)` hashes the character codes mod 9). The hub card uses the color for the initials badge background and a top color bar; the overview page renders a `h-1.5` color bar at the top of the card. No extra DB field is required.
