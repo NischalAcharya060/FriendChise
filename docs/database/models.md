@@ -9,7 +9,7 @@ This page summarizes the main data structures in the schema.
 ## Core relationships
 
 - `User` — a signed-in account.
-- `Organization` — the main tenant and franchise root.
+- `Organization` — the main tenant and franchise root. If `parentId` is set, the org is a child franchisee org; if `parentId` is `null`, it is the parent/root org.
 - `Membership` — connects a user to an organization.
 - `Role` — an org-scoped role used for permission gating.
 - `Permission` — links a role to a permission action.

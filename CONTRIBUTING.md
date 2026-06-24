@@ -4,31 +4,54 @@ Thanks for helping improve FriendChise.
 
 If this project helps you, please star the repo, follow my work, and share it.
 
-## 1. Start with a plan
+## 1. Start with an issue
 
 Open a GitHub issue before a PR if the change is larger than a small bug fix. That keeps the work focused and avoids duplicate effort.
 
 If you are looking for ideas, see [Ideas for Contributing](https://friendchise.app/doc/contributing/ideas-for-contribution).
 
-## 2. Use the right setup path
+## 2. Follow the exact setup steps
 
-Follow [Quick Start](https://friendchise.app/doc/development/quick-start). That guide shows the exact local path, including Docker commands for macOS/Linux and Windows:
+If you want the shorter overview, see [Quick Start](https://friendchise.app/doc/development/quick-start). If you are new, follow the steps below exactly; that guide shows the exact local path, including Docker commands for macOS/Linux and Windows.
 
-- fork and clone the repo
-- start a local Postgres database with Docker or a native install
-- create `.env.local` with `DATABASE_URL`, `AUTH_SECRET`, and `AUTH_URL`
-- generate `AUTH_SECRET` with `npx auth secret` if needed
-- run migrations, generate Prisma, and seed
-- start the app
-- open `/signin` and use a seeded user or the demo flow
+### 2.1 Fork and clone the repo
 
-If you are working against a shared Supabase-backed environment, keep the same env vars in `.env.local` and provision that database separately.
+```bash
+git clone https://github.com/<your-username>/FriendChise.git
+cd FriendChise
+```
 
-## 3. Local env
+If you already have the repo open, just use the folder you already cloned.
 
-Create or update `.env.local` in the repo root.
+### 2.2 Start a local Postgres database
 
-Minimum values for local UI work:
+Use Docker if you want the quickest setup. The same Postgres container image works on macOS, Linux, and Windows through Docker Desktop:
+
+```bash
+docker run --name friendchise-postgres \
+	-e POSTGRES_USER=postgres \
+	-e POSTGRES_PASSWORD=postgres \
+	-e POSTGRES_DB=friendchise \
+	-p 5432:5432 \
+	-d postgres:16
+```
+
+If you are on Windows PowerShell or Windows Terminal, use this version:
+
+```powershell
+docker run --name friendchise-postgres `
+  -e POSTGRES_USER=postgres `
+  -e POSTGRES_PASSWORD=postgres `
+  -e POSTGRES_DB=friendchise `
+  -p 5432:5432 `
+  -d postgres:16
+```
+
+If you already have Postgres installed locally, use that instead. The important part is that `DATABASE_URL` points to your local database, not Supabase.
+
+### 2.3 Create `.env.local`
+
+Create `.env.local` in the repo root with these values:
 
 ```env
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/friendchise
@@ -36,18 +59,15 @@ AUTH_SECRET=your-generated-secret-here
 AUTH_URL=http://localhost:3000
 ```
 
-If you are using a shared dev database, also set:
-
-- `SEED_NAMESPACE` to keep your seed data isolated
-- `SEED_DEV_IDENTIFIERS` if you need the safety checks for non-local databases
-
-Generate `AUTH_SECRET` once if needed:
+If you do not have an auth secret yet, generate one:
 
 ```bash
 npx auth secret
 ```
 
-## 4. Set up the database
+If you are working against a shared Supabase-backed dev environment, keep the same env vars in `.env.local` and provision that database separately. If you need namespaced seed data, also set `SEED_NAMESPACE`.
+
+### 2.4 Install, migrate, generate, and seed
 
 Run these commands in order:
 
@@ -62,20 +82,20 @@ If you already restored a snapshot that contains data, `pnpm seed` is still safe
 
 If the schema is out of sync, rerun `pnpm prisma migrate dev`.
 
-## 5. Start the app
+### 2.5 Start the app
 
 ```bash
 pnpm dev
 ```
 
-Then open `/signin` and use either:
+Then open [localhost:3000/signin](http://localhost:3000/signin) and use either:
 
 - the seeded dev user picker
 - the demo button for an isolated demo org
 
-No app password is required.
+No app password is required. The data you edit goes into your local Postgres database only.
 
-## 6. Working rules
+## 3. Working rules
 
 - Keep `.env.local` private. Never commit it.
 - Keep production secrets out of the repo.
@@ -85,7 +105,7 @@ No app password is required.
 - Keep the Supabase storage vars set before running the app locally if you need logos, images, or uploads.
 - If you change Prisma models, create a migration with `pnpm prisma migrate dev --name <migration-name>`.
 
-## 7. Testing
+## 4. Testing
 
 - `pnpm test` runs the Vitest suite.
 - `pnpm test:integration` runs integration tests.
@@ -95,7 +115,7 @@ No app password is required.
 
 E2E and integration tests depend on seeded data, so keep new test data namespaced or disposable.
 
-## 8. Pull requests
+## 5. Pull requests
 
 - Keep PRs focused on one change when possible.
 - Include tests for behavior changes.

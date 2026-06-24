@@ -9,7 +9,6 @@ order: 1
 - Node.js 20+
 - pnpm
 - A local Postgres database, such as Docker Desktop or a native install, or a Supabase Postgres project
-- Supabase Storage credentials in `.env.local` if you plan to use image or upload features
 
 ## Quick start
 

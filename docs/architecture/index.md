@@ -10,6 +10,7 @@ This section covers the main system-level docs for FriendChise.
 
 - [Tech Stack](/doc/architecture/stack)
 - [Operations](/doc/architecture/operations)
+- [Franchise System](/doc/architecture/franchise-system)
 - [Image Handling](/doc/architecture/image-handling)
 - [Time Model](/doc/architecture/time-model)
 - [Services and Actions](/doc/architecture/services-and-actions)
